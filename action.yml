@@ -48,7 +48,7 @@ runs:
 
     - name: Xcode Select
       run: |
-        xcode-select -s /Applications/Xcode_${{ inputs.XCODE_VERSION }}.app
+        sudo xcode-select -s /Applications/Xcode_${{ inputs.XCODE_VERSION }}.app
       shell: bash
 
     - name: Build and Test
