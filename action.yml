@@ -10,11 +10,11 @@ inputs:
     options:
     - Pull Request
     - Merge
-  XCODE_VERSION:
-    description: 'The version of Xcode to build the iOS package from'
-    required: true
   PACKAGE_SCHEME:
     description: 'The scheme to build the package against'
+    required: true
+  XCODE_VERSION:
+    description: 'The version of Xcode to build the iOS package from'
     required: true
   RUN_DESTINATION:
     description: 'A destination specifier describing the device (or devices) to use as a destination'
