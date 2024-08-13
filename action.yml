@@ -39,6 +39,7 @@ runs:
       run: |
         brew install swiftlint
         swiftlint --strict
+      shell: bash
 
     - name: Validate Pull Request Name
       id: versioning
@@ -49,6 +50,7 @@ runs:
     - name: Xcode Select
       run: |
         xcode-select -s /Applications/Xcode_${{ inputs.XCODE_VERSION }}.app
+      shell: bash
 
     - name: Build and Test
       run: |
@@ -56,6 +58,7 @@ runs:
           -destination "${{ inputs.RUN_DESTINATION }}" \
           -enableCodeCoverage YES \
           -resultBundlePath result.xcresult | xcbeautify
+      shell: bash
 
     - name: Run Sonar Script
       run: |
@@ -73,6 +76,7 @@ runs:
           -Dsonar.pullrequest.key=$pull_number \
           -Dsonar.pullrequest.branch=${{ github.head_ref }} \
           -Dsonar.pullrequest.base=${{ github.base_re f}}
+      shell: bash
 
     - name: Check SonarCloud Results
       if: ${{ inputs.ACTION_TYPE == 'Pull Request' }}
@@ -88,6 +92,7 @@ runs:
         sonar-scanner \
           -Dsonar.token=${{ inputs.SONAR_TOKEN }} \
           -Dsonar.coverageReportPaths="sonarqube-generic-coverage.xml"
+      shell: bash
 
     - name: Increment Version
       if: ${{ inputs.ACTION_TYPE == 'Merge' }}
