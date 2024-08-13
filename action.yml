@@ -69,6 +69,8 @@ runs:
       run: |
         pull_number=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
 
+        brew install sonar-scanner
+
         sonar-scanner \
           -Dsonar.token=${{ inputs.SONAR_TOKEN }} \
           -Dsonar.coverageReportPaths="sonarqube-generic-coverage.xml" \
@@ -86,6 +88,8 @@ runs:
     - name: Run Merge SonarCloud Scanning
       if: ${{ inputs.ACTION_TYPE == 'Merge' }}
       run: |
+        brew install sonar-scanner
+
         sonar-scanner \
           -Dsonar.token=${{ inputs.SONAR_TOKEN }} \
           -Dsonar.coverageReportPaths="sonarqube-generic-coverage.xml"
