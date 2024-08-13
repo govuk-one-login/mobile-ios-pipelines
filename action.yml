@@ -75,14 +75,12 @@ runs:
           -Dsonar.coverageReportPaths="sonarqube-generic-coverage.xml" \
           -Dsonar.pullrequest.key=$pull_number \
           -Dsonar.pullrequest.branch=${{ github.head_ref }} \
-          -Dsonar.pullrequest.base=${{ github.base_re f}}
+          -Dsonar.pullrequest.base=${{ github.base_ref }}
       shell: bash
 
     - name: Check SonarCloud Results
       if: ${{ inputs.ACTION_TYPE == 'Pull Request' }}
       uses: sonarsource/sonarqube-quality-gate-action@d304d050d930b02a896b0f85935344f023928496 # pin@v1.1.0
-      # Force to fail step after specific time
-      timeout-minutes: 5
       env:
         SONAR_TOKEN: ${{ inputs.SONAR_TOKEN }}
 
