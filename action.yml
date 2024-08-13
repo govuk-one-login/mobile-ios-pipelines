@@ -3,6 +3,13 @@ description: 'Run pipelines to validate code before merge and deploy afterwards'
 icon: 'check-circle'
 color: 'blue'
 inputs:
+  ACTION_TYPE:
+    description: 'Which type of action to perform.'
+    required: true
+    type: choice
+    options:
+    - Pull Request
+    - Merge
   XCODE_VERSION:
     description: 'The version of Xcode to build the iOS package from'
     required: true
@@ -35,8 +42,8 @@ runs:
       uses: Oliver-Binns/Versioning@4695fba9f63bed5b557094f9a64f7a2b1a7639e8 # pin@v1.1.0
       with:
         ACTION_TYPE: 'Validate'
-        
-    - name: Xcode select
+
+    - name: Xcode Select
       run: |
         xcode-select -s /Applications/Xcode_${{ inputs.XCODE_VERSION }}.app
 
@@ -47,18 +54,28 @@ runs:
           -enableCodeCoverage YES \
           -resultBundlePath result.xcresult | xcbeautify
 
-    - name: Run SonarCloud Scanning
+    - name: Run Sonar Script
+      run: |
+        bash xccov-to-sonarqube-generic.sh result.xcresult > sonarqube-generic-coverage.xml
+
+    - name: Run Pull Request SonarCloud Scanning
+      if: ${{ inputs.ACTION_TYPE == 'Pull Request' }}
       run: |
         pull_number=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
-        
-        bash xccov-to-sonarqube-generic.sh result.xcresult > sonarqube-generic-coverage.xml
-        
+
         sonar-scanner \
           -Dsonar.token=${{ inputs.SONAR_TOKEN }} \
           -Dsonar.coverageReportPaths="sonarqube-generic-coverage.xml" \
           -Dsonar.pullrequest.key=$pull_number \
           -Dsonar.pullrequest.branch=${{ github.head_ref }} \
           -Dsonar.pullrequest.base=${{ github.base_re f}}
+
+    - name: Run Merge SonarCloud Scanning
+      if: ${{ inputs.ACTION_TYPE == 'Merge' }}
+      run: |
+        sonar-scanner \
+          -Dsonar.token=${{ inputs.SONAR_TOKEN }} \
+          -Dsonar.coverageReportPaths="sonarqube-generic-coverage.xml"
 
     - name: Check SonarCloud Results
       uses: sonarsource/sonarqube-quality-gate-action@d304d050d930b02a896b0f85935344f023928496 # pin@v1.1.0
