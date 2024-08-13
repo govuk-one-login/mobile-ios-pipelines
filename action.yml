@@ -1,0 +1,68 @@
+name: 'iOS pipelines'
+description: 'Run pipelines to validate code before merge and deploy afterwards'
+icon: 'check-circle'
+color: 'blue'
+inputs:
+  XCODE_VERSION:
+    description: 'The version of Xcode to build the iOS package from'
+    required: true
+  PACKAGE_SCHEME:
+    description: 'The scheme to build the package against'
+    required: true
+  RUN_DESTINATION:
+    description: 'A destination specifier describing the device (or devices) to use as a destination'
+    required: true
+  SONAR_TOKEN:
+    description: 'A token for SonarCloud to enable the workflow to read and upload new quality reports.'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # pin@v4
+      with:
+        lfs: 'true'
+        fetch-depth: 0
+
+    - name: Run Linter
+      run: |
+        brew install swiftlint
+        swiftlint --strict
+
+    - name: Validate Pull Request Name
+      id: versioning
+      uses: Oliver-Binns/Versioning@4695fba9f63bed5b557094f9a64f7a2b1a7639e8 # pin@v1.1.0
+      with:
+        ACTION_TYPE: 'Validate'
+        
+    - name: Xcode select
+      run: |
+        xcode-select -s /Applications/Xcode_${{ inputs.XCODE_VERSION }}.app
+
+    - name: Build and Test
+      run: |
+        xcodebuild -scheme ${{ inputs.PACKAGE_SCHEME }} test \
+          -destination "${{ inputs.RUN_DESTINATION }}" \
+          -enableCodeCoverage YES \
+          -resultBundlePath result.xcresult | xcbeautify
+
+    - name: Run SonarCloud Scanning
+      run: |
+        pull_number=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
+        
+        bash xccov-to-sonarqube-generic.sh result.xcresult > sonarqube-generic-coverage.xml
+        
+        sonar-scanner \
+          -Dsonar.token=${{ inputs.SONAR_TOKEN }} \
+          -Dsonar.coverageReportPaths="sonarqube-generic-coverage.xml" \
+          -Dsonar.pullrequest.key=$pull_number \
+          -Dsonar.pullrequest.branch=${{ github.head_ref }} \
+          -Dsonar.pullrequest.base=${{ github.base_re f}}
+
+    - name: Check SonarCloud Results
+      uses: sonarsource/sonarqube-quality-gate-action@d304d050d930b02a896b0f85935344f023928496 # pin@v1.1.0
+      # Force to fail step after specific time
+      timeout-minutes: 5
+      env:
+        SONAR_TOKEN: ${{ inputs.SONAR_TOKEN }}
