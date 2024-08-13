@@ -3,6 +3,9 @@ description: 'Run pipelines to validate code before merge and deploy afterwards'
 icon: 'check-circle'
 color: 'blue'
 inputs:
+  GITHUB_TOKEN:
+    description: 'A GitHub API token that is automatically created by the workflow. This is required for release workflows to upload new release artefacts.'
+    required: false
   ACTION_TYPE:
     description: 'Which type of action to perform.'
     required: true
@@ -70,6 +73,14 @@ runs:
           -Dsonar.pullrequest.branch=${{ github.head_ref }} \
           -Dsonar.pullrequest.base=${{ github.base_re f}}
 
+    - name: Check SonarCloud Results
+      if: ${{ inputs.ACTION_TYPE == 'Pull Request' }}
+      uses: sonarsource/sonarqube-quality-gate-action@d304d050d930b02a896b0f85935344f023928496 # pin@v1.1.0
+      # Force to fail step after specific time
+      timeout-minutes: 5
+      env:
+        SONAR_TOKEN: ${{ inputs.SONAR_TOKEN }}
+
     - name: Run Merge SonarCloud Scanning
       if: ${{ inputs.ACTION_TYPE == 'Merge' }}
       run: |
@@ -77,9 +88,10 @@ runs:
           -Dsonar.token=${{ inputs.SONAR_TOKEN }} \
           -Dsonar.coverageReportPaths="sonarqube-generic-coverage.xml"
 
-    - name: Check SonarCloud Results
-      uses: sonarsource/sonarqube-quality-gate-action@d304d050d930b02a896b0f85935344f023928496 # pin@v1.1.0
-      # Force to fail step after specific time
-      timeout-minutes: 5
-      env:
-        SONAR_TOKEN: ${{ inputs.SONAR_TOKEN }}
+    - name: Increment Version
+      if: ${{ inputs.ACTION_TYPE == 'Merge' }}
+      id: versioning
+      uses: Oliver-Binns/Versioning@4695fba9f63bed5b557094f9a64f7a2b1a7639e8 # pin@v1.1.0
+      with:
+        ACTION_TYPE: 'Release'
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
