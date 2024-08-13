@@ -3,9 +3,6 @@ description: 'Run pipelines to validate code before merge and deploy afterwards'
 icon: 'check-circle'
 color: 'blue'
 inputs:
-  GITHUB_TOKEN:
-    description: 'A GitHub API token that is automatically created by the workflow. This is required for release workflows to upload new release artefacts.'
-    required: false
   ACTION_TYPE:
     description: 'Which type of action to perform.'
     required: true
@@ -25,6 +22,9 @@ inputs:
   SONAR_TOKEN:
     description: 'A token for SonarCloud to enable the workflow to read and upload new quality reports.'
     required: true
+  GITHUB_TOKEN:
+    description: 'A GitHub API token that is automatically created by the workflow. This is required for release workflows to upload new release artefacts.'
+    required: false
 
 runs:
   using: "composite"
@@ -59,7 +59,8 @@ runs:
 
     - name: Run Sonar Script
       run: |
-        bash xccov-to-sonarqube-generic.sh result.xcresult > sonarqube-generic-coverage.xml
+        $GITHUB_ACTION_PATH/xccov-to-sonarqube-generic.sh result.xcresult > sonarqube-generic-coverage.xml
+      shell: bash
 
     - name: Run Pull Request SonarCloud Scanning
       if: ${{ inputs.ACTION_TYPE == 'Pull Request' }}
