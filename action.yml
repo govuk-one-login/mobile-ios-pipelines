@@ -61,17 +61,17 @@ runs:
           -resultBundlePath result.xcresult | xcbeautify
       shell: bash
 
-    - name: Run Sonar Script
+    - name: Set up Sonar
       run: |
-        $GITHUB_ACTION_PATH/xccov-to-sonarqube-generic.sh result.xcresult > sonarqube-generic-coverage.xml
+        ${{ github.action_path }}/scripts/sonar-properties.sh ${{ github.repository_owner }} ${{ github.event.repository.name }} > sonar-project.properties
+        ${{ github.action_path }}/scripts/xccov-to-sonarqube-generic.sh result.xcresult > sonarqube-generic-coverage.xml
+        brew install sonar-scanner
       shell: bash
 
     - name: Run Pull Request SonarCloud Scanning
       if: ${{ inputs.ACTION_TYPE == 'Pull Request' }}
       run: |
         pull_number=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
-
-        brew install sonar-scanner
 
         sonar-scanner \
           -Dsonar.token=${{ inputs.SONAR_TOKEN }} \
@@ -90,8 +90,6 @@ runs:
     - name: Run Merge SonarCloud Scanning
       if: ${{ inputs.ACTION_TYPE == 'Merge' }}
       run: |
-        brew install sonar-scanner
-
         sonar-scanner \
           -Dsonar.token=${{ inputs.SONAR_TOKEN }} \
           -Dsonar.coverageReportPaths="sonarqube-generic-coverage.xml"
