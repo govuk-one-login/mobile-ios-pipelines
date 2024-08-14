@@ -1,7 +1,5 @@
 name: 'iOS pipelines'
-description: 'Run pipelines to validate code before merge and deploy afterwards'
-icon: 'check-circle'
-color: 'blue'
+description: 'Run pipelines to validate code before merge or deploy afterwards'
 inputs:
   ACTION_TYPE:
     description: 'Which type of action to perform.'
@@ -11,13 +9,13 @@ inputs:
     - Pull Request
     - Merge
   WORKSPACE:
-    description: 'Workspace used to build the package if there is one in the repo'
+    description: 'Workspace used to build the project/package if there is one in the repo'
     required: false
-  PACKAGE_SCHEME:
-    description: 'The scheme to build the package against'
+  SCHEME:
+    description: 'The scheme to build the project/package against'
     required: true
   XCODE_VERSION:
-    description: 'The version of Xcode to build the iOS package from'
+    description: 'The version of Xcode to build the iOS project/package from'
     required: true
   RUN_DESTINATION:
     description: 'A destination specifier describing the device (or devices) to use as a destination'
@@ -57,7 +55,7 @@ runs:
 
     - name: Build and Test
       run: |
-        xcodebuild -workspace "${{ inputs.WORKSPACE }}" -scheme ${{ inputs.PACKAGE_SCHEME }} test \
+        xcodebuild -workspace "${{ inputs.WORKSPACE }}" -scheme ${{ inputs.SCHEME }} test \
           -destination "${{ inputs.RUN_DESTINATION }}" \
           -enableCodeCoverage YES \
           -resultBundlePath result.xcresult | xcbeautify
