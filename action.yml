@@ -10,6 +10,9 @@ inputs:
     options:
     - Pull Request
     - Merge
+  WORKSPACE:
+    description: 'Workspace used to build the package if there is one in the repo'
+    required: false
   PACKAGE_SCHEME:
     description: 'The scheme to build the package against'
     required: true
@@ -42,6 +45,7 @@ runs:
       shell: bash
 
     - name: Validate Pull Request Name
+      if: ${{ inputs.ACTION_TYPE == 'Pull Request' }}
       uses: Oliver-Binns/Versioning@4695fba9f63bed5b557094f9a64f7a2b1a7639e8 # pin@v1.1.0
       with:
         ACTION_TYPE: 'Validate'
@@ -53,7 +57,7 @@ runs:
 
     - name: Build and Test
       run: |
-        xcodebuild -scheme ${{ inputs.PACKAGE_SCHEME }} test \
+        xcodebuild -workspace "${{ inputs.WORKSPACE }}" -scheme ${{ inputs.PACKAGE_SCHEME }} test \
           -destination "${{ inputs.RUN_DESTINATION }}" \
           -enableCodeCoverage YES \
           -resultBundlePath result.xcresult | xcbeautify
