@@ -1,13 +1,6 @@
 name: 'iOS pipelines'
 description: 'Run pipelines to validate code before merge or deploy afterwards'
 inputs:
-  ACTION_TYPE:
-    description: 'Which type of action to perform.'
-    required: true
-    type: choice
-    options:
-    - Pull Request
-    - Merge
   WORKSPACE:
     description: 'Workspace used to build the project/package if there is one in the repo'
     required: false
@@ -17,9 +10,11 @@ inputs:
   XCODE_VERSION:
     description: 'The version of Xcode to build the iOS project/package from'
     required: true
+    default: 15.4
   RUN_DESTINATION:
     description: 'A destination specifier describing the device (or devices) to use as a destination'
     required: true
+    default: platform=iOS Simulator,name=iPhone 15,OS=17.5
   SONAR_TOKEN:
     description: 'A token for SonarCloud to enable the workflow to read and upload new quality reports.'
     required: true
@@ -37,14 +32,14 @@ runs:
         fetch-depth: 0
 
     - name: Run Linter
-      if: ${{ inputs.ACTION_TYPE == 'Pull Request' }}
+      if: ${{ github.event_name == 'pull_request' }}
       run: |
         brew install swiftlint
         swiftlint --strict
       shell: bash
 
     - name: Validate Pull Request Name
-      if: ${{ inputs.ACTION_TYPE == 'Pull Request' }}
+      if: ${{ github.event_name == 'pull_request' }}
       uses: Oliver-Binns/Versioning@4695fba9f63bed5b557094f9a64f7a2b1a7639e8 # pin@v1.1.0
       with:
         ACTION_TYPE: 'Validate'
@@ -70,7 +65,7 @@ runs:
       shell: bash
 
     - name: Run Pull Request SonarCloud Scanning
-      if: ${{ inputs.ACTION_TYPE == 'Pull Request' }}
+      if: ${{ github.event_name == 'pull_request' }}
       run: |
         pull_number=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
 
@@ -83,13 +78,13 @@ runs:
       shell: bash
 
     - name: Check SonarCloud Results
-      if: ${{ inputs.ACTION_TYPE == 'Pull Request' }}
+      if: ${{ github.event_name == 'pull_request' }}
       uses: sonarsource/sonarqube-quality-gate-action@d304d050d930b02a896b0f85935344f023928496 # pin@v1.1.0
       env:
         SONAR_TOKEN: ${{ inputs.SONAR_TOKEN }}
 
     - name: Run Merge SonarCloud Scanning
-      if: ${{ inputs.ACTION_TYPE == 'Merge' }}
+      if: ${{ github.event_name != 'pull_request' }}
       run: |
         sonar-scanner \
           -Dsonar.token=${{ inputs.SONAR_TOKEN }} \
@@ -97,7 +92,7 @@ runs:
       shell: bash
 
     - name: Increment Version
-      if: ${{ inputs.ACTION_TYPE == 'Merge' }}
+      if: ${{ github.event_name != 'pull_request' }}
       id: versioning
       uses: Oliver-Binns/Versioning@4695fba9f63bed5b557094f9a64f7a2b1a7639e8 # pin@v1.1.0
       with:
