@@ -37,6 +37,7 @@ runs:
         fetch-depth: 0
 
     - name: Run Linter
+      if: ${{ inputs.ACTION_TYPE == 'Pull Request' }}
       run: |
         brew install swiftlint
         swiftlint --strict
