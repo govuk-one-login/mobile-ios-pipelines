@@ -51,7 +51,7 @@ runs:
 
     - name: Build and Test
       run: |
-        xcodebuild -workspace "${{ inputs.WORKSPACE }}" -scheme ${{ inputs.SCHEME }} test \
+        set -o pipefail && xcodebuild -workspace "${{ inputs.WORKSPACE }}" -scheme ${{ inputs.SCHEME }} test \
           -destination "${{ inputs.RUN_DESTINATION }}" \
           -enableCodeCoverage YES \
           -resultBundlePath result.xcresult | xcbeautify
