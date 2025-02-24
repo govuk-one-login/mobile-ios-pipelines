@@ -40,7 +40,7 @@ runs:
 
     - name: Validate Pull Request Name
       if: ${{ github.event_name == 'pull_request' }}
-      uses: Oliver-Binns/Versioning@4695fba9f63bed5b557094f9a64f7a2b1a7639e8 # pin@v1.1.0
+      uses: Oliver-Binns/Versioning@ea913b155653c7f72c3ecb01768d8103ad57f639 # pin@v1.2.2
       with:
         ACTION_TYPE: 'Validate'
 
@@ -94,7 +94,7 @@ runs:
     - name: Increment Version
       if: ${{ github.event_name != 'pull_request' }}
       id: versioning
-      uses: Oliver-Binns/Versioning@4695fba9f63bed5b557094f9a64f7a2b1a7639e8 # pin@v1.1.0
+      uses: Oliver-Binns/Versioning@ea913b155653c7f72c3ecb01768d8103ad57f639 # pin@v1.2.2
       with:
         ACTION_TYPE: 'Release'
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
